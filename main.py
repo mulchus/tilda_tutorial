@@ -1,6 +1,5 @@
 import requests
 import logging
-import json
 from pathlib import Path
 from environs import Env
 
@@ -41,16 +40,23 @@ def get_from_tilda(tilda_publickey, tilda_secretkey, url, project_id=None, page_
     return responce.json()
 
 
-def save_images(project_info):
-    for image in project_info['images']:
-        response = requests.get(image['from'])
+def save_page_assets(page_info, html_dir):
+    def save_element(element, element_dir):
+        response = requests.get(element['from'])
         response.raise_for_status()
-        with open(Path.joinpath(BASE_DIR, 'images', image['to']), 'wb') as file:
+        with open(Path.joinpath(html_dir, element_dir.replace('/', ''), element['to']), 'wb') as file:
             file.write(response.content)
 
+    for image in page_info['images']:
+        save_element(image, page_info['export_imgpath'])
+    for js in page_info['js']:
+        save_element(js, page_info['export_jspath'])
+    for css in page_info['css']:
+        save_element(css, page_info['export_csspath'])
 
-def save_html(page_info):
-    with open(Path.joinpath(BASE_DIR, 'pages', page_info['filename']), 'wb') as file:
+
+def save_html(page_info, html_dir):
+    with open(Path.joinpath(html_dir, page_info['filename']), 'wb') as file:
         file.write(page_info['html'].encode('utf-8'))
         
 
@@ -59,27 +65,37 @@ def main():
     logger.info("Start program")
     tilda_publickey = env('TILDA_PUBLICKEY')
     tilda_secretkey = env('TILDA_SECRETKEY')
-    projects = get_from_tilda(tilda_publickey, tilda_secretkey,
-                              'https://api.tildacdn.info/v1/getprojectslist')
-    print(projects)
+    project_id = env('TILDA_PROJECT_ID')
+
+    # projects = get_from_tilda(tilda_publickey, tilda_secretkey,
+    #                           'https://api.tildacdn.info/v1/getprojectslist')
+    # print(projects)
     
-    project_info = get_from_tilda(tilda_publickey, tilda_secretkey,
-                                  'https://api.tildacdn.info/v1/getprojectinfo', 0)
-    print(project_info)
-    save_images(json.loads(project_info['result']))
-    
+    # project_info = get_from_tilda(tilda_publickey, tilda_secretkey,
+    #                               'https://api.tildacdn.info/v1/getprojectinfo', project_id)
+    # print(project_info)
+
     pages = get_from_tilda(tilda_publickey, tilda_secretkey,
-                           'https://api.tildacdn.info/v1/getpageslist', 0)
-    print(pages)
-    
-    for page in pages:
-        page_info = get_from_tilda(tilda_publickey, tilda_secretkey,
-                                   'https://api.tildacdn.info/v1/getpagefullexport',
-                                   page['id'])
-        print(page_info)
-        save_images(json.loads(page_info['result']))
-        save_html(json.loads(page_info['result']))
-        
+                           'https://api.tildacdn.info/v1/getpageslist', project_id)
+    # print(pages)
+    # print(len(pages['result']))
+
+    for page in pages['result']:
+        page_info = get_from_tilda(
+            tilda_publickey, tilda_secretkey,
+            'https://api.tildacdn.info/v1/getpagefullexport',
+            None, page['id'],
+        )
+
+        html_dir = Path.joinpath(BASE_DIR, 'pages', page_info['result']['id'])
+        Path.mkdir(html_dir, parents=True, exist_ok=True)
+        save_html(page_info['result'], html_dir)
+
+        for end_path in ['export_imgpath', 'export_jspath', 'export_csspath']:
+            Path.mkdir(Path.joinpath(html_dir, (page_info['result'][end_path]).replace('/', '')),
+                       parents=True, exist_ok=True)
+        save_page_assets(page_info['result'], html_dir)
+
     logger.info("End program")
     
 
