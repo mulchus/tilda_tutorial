@@ -71,30 +71,37 @@ def main():
     #                           'https://api.tildacdn.info/v1/getprojectslist')
     # print(projects)
     
+    # getprojectinfo getprojectexport
     # project_info = get_from_tilda(tilda_publickey, tilda_secretkey,
     #                               'https://api.tildacdn.info/v1/getprojectinfo', project_id)
     # print(project_info)
 
-    pages = get_from_tilda(tilda_publickey, tilda_secretkey,
-                           'https://api.tildacdn.info/v1/getpageslist', project_id)
+    # pages = get_from_tilda(tilda_publickey, tilda_secretkey,
+    #                        'https://api.tildacdn.info/v1/getpageslist', project_id)
     # print(pages)
     # print(len(pages['result']))
 
-    for page in pages['result']:
-        page_info = get_from_tilda(
-            tilda_publickey, tilda_secretkey,
-            'https://api.tildacdn.info/v1/getpagefullexport',
-            None, page['id'],
-        )
+    # getpage getpagefull getpageexport getpagefullexport
+    page_id = '48391945'  # 48391979 48420283
+    page = get_from_tilda(tilda_publickey, tilda_secretkey,
+                           'https://api.tildacdn.info/v1/getpagefullexport', None, page_id)
+    print(page)
 
-        html_dir = Path.joinpath(BASE_DIR, 'pages', page_info['result']['id'])
-        Path.mkdir(html_dir, parents=True, exist_ok=True)
-        save_html(page_info['result'], html_dir)
-
-        for end_path in ['export_imgpath', 'export_jspath', 'export_csspath']:
-            Path.mkdir(Path.joinpath(html_dir, (page_info['result'][end_path]).replace('/', '')),
-                       parents=True, exist_ok=True)
-        save_page_assets(page_info['result'], html_dir)
+    # for page in pages['result']:
+    #     page_info = get_from_tilda(
+    #         tilda_publickey, tilda_secretkey,
+    #         'https://api.tildacdn.info/v1/getpagefullexport',
+    #         None, page['id'],
+    #     )
+    #
+    #     html_dir = Path.joinpath(BASE_DIR, 'pages', page_info['result']['id'])
+    #     Path.mkdir(html_dir, parents=True, exist_ok=True)
+    #     save_html(page_info['result'], html_dir)
+    #
+    #     for end_path in ['export_imgpath', 'export_jspath', 'export_csspath']:
+    #         Path.mkdir(Path.joinpath(html_dir, (page_info['result'][end_path]).replace('/', '')),
+    #                    parents=True, exist_ok=True)
+    #     save_page_assets(page_info['result'], html_dir)
 
     logger.info("End program")
     
