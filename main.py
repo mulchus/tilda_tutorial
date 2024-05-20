@@ -44,7 +44,7 @@ def save_page_assets(page_info, html_dir):
     def save_element(element, element_dir):
         response = requests.get(element['from'])
         response.raise_for_status()
-        with open(Path.joinpath(html_dir, element_dir.replace('/', ''), element['to']), 'wb') as file:
+        with open(Path.joinpath(html_dir, element_dir.replace('/', ''), element['to']), 'wb+') as file:
             file.write(response.content)
 
     for image in page_info['images']:
@@ -56,36 +56,39 @@ def save_page_assets(page_info, html_dir):
 
 
 def save_html(page_info, html_dir):
-    with open(Path.joinpath(html_dir, page_info['filename']), 'wb') as file:
+    with open(Path.joinpath(html_dir, page_info['filename']), 'wb+') as file:
         file.write(page_info['html'].encode('utf-8'))
         
 
 def main():
     configuring_logging()
     logger.info("Start program")
-    tilda_publickey = env('TILDA_PUBLICKEY')
-    tilda_secretkey = env('TILDA_SECRETKEY')
-    project_id = env('TILDA_PROJECT_ID')
+    tilda_publickey = env('TILDA__PUBLIC_KEY')
+    tilda_secretkey = env('TILDA__SECRET_KEY')
+    project_id = env('TILDA__PROJECT_ID')
 
     # projects = get_from_tilda(tilda_publickey, tilda_secretkey,
     #                           'https://api.tildacdn.info/v1/getprojectslist')
     # print(projects)
     
     # getprojectinfo getprojectexport
-    # project_info = get_from_tilda(tilda_publickey, tilda_secretkey,
-    #                               'https://api.tildacdn.info/v1/getprojectinfo', project_id)
-    # print(project_info)
+    project_info = get_from_tilda(tilda_publickey, tilda_secretkey,
+                                  'https://api.tildacdn.info/v1/getprojectexport', project_id)
+    print(project_info)
+    save_page_assets(project_info['result'], Path.joinpath(BASE_DIR, f'project{project_id}'))
 
     # pages = get_from_tilda(tilda_publickey, tilda_secretkey,
     #                        'https://api.tildacdn.info/v1/getpageslist', project_id)
-    # print(pages)
     # print(len(pages['result']))
+    # for page in pages['result']:
+    #     print(page['id'], page['alias'], page['filename'])
+    # print(pages)
 
     # getpage getpagefull getpageexport getpagefullexport
-    page_id = '48391945'  # 48391979 48420283
-    page = get_from_tilda(tilda_publickey, tilda_secretkey,
-                           'https://api.tildacdn.info/v1/getpagefullexport', None, page_id)
-    print(page)
+    # page_id = '35998050'  # 48391979 48420283 48391945
+    # page = get_from_tilda(tilda_publickey, tilda_secretkey,
+    #                        'https://api.tildacdn.info/v1/getpagefullexport', None, page_id)
+    # print(page)
 
     # for page in pages['result']:
     #     page_info = get_from_tilda(
