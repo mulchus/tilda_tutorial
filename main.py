@@ -44,6 +44,7 @@ def save_page_assets(page_info, html_dir):
     def save_element(element, element_dir):
         response = requests.get(element['from'])
         response.raise_for_status()
+        Path.mkdir(Path.joinpath(html_dir, element_dir.replace('/', '')), parents=True, exist_ok=True)
         with open(Path.joinpath(html_dir, element_dir.replace('/', ''), element['to']), 'wb+') as file:
             file.write(response.content)
 
@@ -53,6 +54,11 @@ def save_page_assets(page_info, html_dir):
         save_element(js, page_info['export_jspath'])
     for css in page_info['css']:
         save_element(css, page_info['export_csspath'])
+
+
+def replace_assets_paths(html):
+    html = html.replace('/tilda_assets/', './tilda_assets/')
+    return html
 
 
 def save_html(page_info, html_dir):
@@ -72,10 +78,10 @@ def main():
     # print(projects)
     
     # getprojectinfo getprojectexport
-    project_info = get_from_tilda(tilda_publickey, tilda_secretkey,
-                                  'https://api.tildacdn.info/v1/getprojectexport', project_id)
-    print(project_info)
-    save_page_assets(project_info['result'], Path.joinpath(BASE_DIR, f'project{project_id}'))
+    # project_info = get_from_tilda(tilda_publickey, tilda_secretkey,
+    #                               'https://api.tildacdn.info/v1/getprojectexport', project_id)
+    # print(project_info)
+    # save_page_assets(project_info['result'], Path.joinpath(BASE_DIR, f'project{project_id}'))
 
     # pages = get_from_tilda(tilda_publickey, tilda_secretkey,
     #                        'https://api.tildacdn.info/v1/getpageslist', project_id)
@@ -85,10 +91,16 @@ def main():
     # print(pages)
 
     # getpage getpagefull getpageexport getpagefullexport
-    # page_id = '35998050'  # 48391979 48420283 48391945
-    # page = get_from_tilda(tilda_publickey, tilda_secretkey,
-    #                        'https://api.tildacdn.info/v1/getpagefullexport', None, page_id)
+    page_id = '35998050'  # 48391979 48420283 48391945
+    page = get_from_tilda(tilda_publickey, tilda_secretkey,
+                           'https://api.tildacdn.info/v1/getpagefullexport', None, page_id)
     # print(page)
+
+    save_page_assets(page['result'], Path.joinpath(BASE_DIR, f'page{page_id}'))
+
+    page['result']['html'] = replace_assets_paths(page['result']['html'])
+
+    save_html(page['result'], Path.joinpath(BASE_DIR, f'page{page_id}'))
 
     # for page in pages['result']:
     #     page_info = get_from_tilda(
